@@ -1,11 +1,15 @@
 <template>
-  <div>
-    <v-layer>
-      <v-rect ref="swing" :config="swingConfig" />
-      <v-rect ref="rect" @keydown="handleMove" :config="rectConfig" />
-      <v-regular-polygon @click="rotate(30)" :config="triangleConfig" />
+    <v-layer ref="layer">
+
+      <v-group ref="group" :config="groupConfig">
+        <v-rect ref="swing" :config="swingConfig" />
+      </v-group>
+
+      <v-regular-polygon :config="triangleConfig" />
+
+      <v-label ref="actionBtn" @click="startGame"/>
+
     </v-layer>
-  </div>
 </template>
 
 <script>
@@ -26,13 +30,8 @@
           fill: "red",
           height: 10,
           width: 300,
-          y: 455,
-          x: 160,
-          rotation: 0,
-          offset: {
-            x: 150,
-            y: 5,
-          },
+          y: 0,
+          x: 0,
         },
 
         triangleConfig: {
@@ -42,6 +41,21 @@
           height: 30,
           width: 50,
           fill: '#00D2FF',
+        },
+
+        actionBtnConfig: {
+          x: 20,
+          y: 500,
+        },
+
+        groupConfig: {
+          y: 455,
+          x: 160,
+          rotation: 0,
+          offset: {
+            x: 150,
+            y: 5,
+          },
         }
 
       }
@@ -65,9 +79,6 @@
         const rotated = rotatePoint(topLeft, deg)
         const dx = rotated.x - current.x, dy = rotated.y - current.y
 
-        console.log({dx})
-        console.log({dy})
-
         node.rotation = deg
         node.x = node.x + dx
         node.y = node.y + dy
@@ -76,29 +87,119 @@
 
       handleMove(e) {
         console.log({e})
+      },
+
+      generateButton(node) {
+        node.add(new Konva.Tag({
+          fill: 'black',
+          lineJoin: 'round',
+          shadowColor: 'black',
+          shadowBlur: 10,
+          shadowOffset: 10,
+          shadowOpacity: 0.5
+        }));
+
+        node.add(new Konva.Text({
+          text: 'Start',
+          fontFamily: 'Calibri',
+          fontSize: 18,
+          padding: 5,
+          fill: 'white'
+        }));
+      },
+
+      generateRect() {
+        // add new rect to layer, we remove it after adding it to swing group
+        const layer = this.$refs.layer.getNode()
+
+        let rect = new Konva.Rect({
+          fill: "green",
+          height: 40,
+          width: 40,
+          y: 0,
+          x: 0,
+          id: 'rect'
+        })
+
+        layer.add(rect)
+        layer.draw()
+
+        return rect
+      },
+
+      addNodeToSwingGroup(node) {
+        const swingGroup = this.$refs.group.getNode()
+        const layer = this.$refs.layer.getNode()
+
+        layer.find('#rect').remove()
+        layer.draw()
+
+        this.$nextTick(() => {
+          node.y(0)
+          swingGroup.add(node)
+          swingGroup.draw()
+        })
+
+      },
+
+      startGame() {
+        let box = this.generateRect()
+
+        this.dropBox(box)
+      },
+
+      dropBox(node) {
+        const dropDuration = 2
+        let swing = this.$refs.swing.getNode()
+        let swingPosition = swing.getClientRect()
+
+        node.to({
+          duration: dropDuration,
+          y: swingPosition.y - node.height()
+        })
+
+        setTimeout(() => {
+          this.addNodeToSwingGroup(node)
+        }, dropDuration * 1000)
+
+        // this.rotateSwing()
+
+      },
+
+      rotateSwing() {
+        const swing = this.$refs.group.getNode()
+
+        let tween = new Konva.Tween({
+          node: swing,
+          duration: 1,
+          rotation: -10
+        });
+
+        tween.play()
+
       }
 
     },
 
     mounted() {
+
       let angularSpeed = 90;
 
       let swing = this.$refs.swing.getNode()
-      let box = this.$refs.rect.getNode()
+      // let box = this.$refs.rect.getNode()
+      let actionBtn = this.$refs.actionBtn.getNode()
 
-      var tween = new Konva.Tween({
-        node: swing,
-        duration: 1,
-        rotation: 10
-      });
+      this.generateButton(actionBtn)
 
-      var tween2 = new Konva.Tween({
-        node: box,
-        duration: 5,
-        y: 465
-      });
 
-      tween2.play()
+
+      // var tween2 = new Konva.Tween({
+      //   node: box,
+      //   duration: 5,
+      //   y: 465
+      // });
+      //
+      // tween2.play()
       //
       // setTimeout(() => {
       //   tween.reverse()
