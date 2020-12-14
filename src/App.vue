@@ -1,28 +1,34 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <v-stage :config="configKonva">
+        <Swing />
+    </v-stage>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+
+  import Swing from './components/Swing'
 
 export default {
   name: 'App',
+
+  data() {
+    return {
+      configKonva: {
+        width: 1000,
+        height: 1000
+      }
+    }
+  },
+
   components: {
-    HelloWorld
+    Swing
   }
+
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+
 </style>
