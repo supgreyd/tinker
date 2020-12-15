@@ -18,6 +18,8 @@
 
     data() {
       return {
+        swingGroup: null,
+        swing: null,
         rectConfig: {
           fill: "green",
           height: 40,
@@ -52,6 +54,7 @@
           y: 455,
           x: 160,
           rotation: 0,
+          height: 455,
           offset: {
             x: 150,
             y: 5,
@@ -62,32 +65,6 @@
     },
 
     methods: {
-
-      rotate(deg) {
-        const degToRad = Math.PI / 180
-        let node = this.swingConfig
-
-
-        const rotatePoint = ({x, y}, deg) => {
-          const rcos = Math.cos(deg * degToRad), rsin = Math.sin(deg * degToRad)
-          return {x: x*rcos - y*rsin, y: y*rcos + x*rsin}
-        }
-
-        const topLeft = {x:-node.width / 2, y:-node.height / 2}
-
-        const current = rotatePoint(topLeft, node.rotation)
-        const rotated = rotatePoint(topLeft, deg)
-        const dx = rotated.x - current.x, dy = rotated.y - current.y
-
-        node.rotation = deg
-        node.x = node.x + dx
-        node.y = node.y + dy
-
-      },
-
-      handleMove(e) {
-        console.log({e})
-      },
 
       generateButton(node) {
         node.add(new Konva.Tag({
@@ -111,6 +88,7 @@
       generateRect() {
         // add new rect to layer, we remove it after adding it to swing group
         const layer = this.$refs.layer.getNode()
+        const group = this.$refs.group.getNode()
 
         let rect = new Konva.Rect({
           fill: "green",
@@ -118,7 +96,8 @@
           width: 40,
           y: 0,
           x: 0,
-          id: 'rect'
+          id:  'rect1'
+          // id: group.getChildren().length
         })
 
         layer.add(rect)
@@ -128,41 +107,66 @@
       },
 
       addNodeToSwingGroup(node) {
+        //action when collision happens
         const swingGroup = this.$refs.group.getNode()
         const layer = this.$refs.layer.getNode()
 
-        layer.find('#rect').remove()
-        layer.draw()
-
-        this.$nextTick(() => {
-          node.y(0)
-          swingGroup.add(node)
-          swingGroup.draw()
+        let rect = new Konva.Rect({
+          fill: node.fill(),
+          height: node.height(),
+          width: node.width(),
+          y: 0 - node.height(),
+          x: node.x() - 10,
+          id: 'rect1'
         })
+
+        layer.find(`#${node.attrs.id}`).destroy()
+        layer.draw()
+        swingGroup.add(rect)
+        swingGroup.draw()
+
+        this.rotateSwing()
 
       },
 
       startGame() {
         let box = this.generateRect()
+        let opositBox = this.dropOpositeRect()
+        let DROP_SPEED = 1
 
-        this.dropBox(box)
+        document.addEventListener('keydown', this.logKey)
+
+        let swing = this.$refs.group.getNode()
+
+        let refreshIntervalId = setInterval(() => {
+          DROP_SPEED *= 1.1
+          box.y(box.y() + DROP_SPEED)
+          opositBox.y(opositBox.y() + DROP_SPEED)
+          this.$refs.layer.getNode().draw()
+
+
+          if (box.y() + box.height() >= swing.y() - 5) {
+            clearInterval(refreshIntervalId);
+            this.addNodeToSwingGroup(box)
+            this.addNodeToSwingGroup(opositBox)
+          }
+        }, 100)
+
       },
 
-      dropBox(node) {
-        const dropDuration = 2
-        let swing = this.$refs.swing.getNode()
-        let swingPosition = swing.getClientRect()
+      logKey(e, rect = this.$refs.layer.getNode().find('#rect1')[0]) {
+        //handle drop
 
-        node.to({
-          duration: dropDuration,
-          y: swingPosition.y - node.height()
-        })
+        const MOVE_SPEED = 5
 
-        setTimeout(() => {
-          this.addNodeToSwingGroup(node)
-        }, dropDuration * 1000)
-
-        // this.rotateSwing()
+        //arrow right down
+        if (e.keyCode === 39 && rect.x() <= this.swing.width()/2 - rect.width()) {
+          rect.x(rect.x() + MOVE_SPEED)
+        }
+        //arrow left
+        if (e.keyCode === 37 && rect.x() > 0) {
+          rect.x(rect.x() - MOVE_SPEED)
+        }
 
       },
 
@@ -177,16 +181,39 @@
 
         tween.play()
 
+      },
+
+      dropOpositeRect() {
+        const layer = this.$refs.layer.getNode()
+        const swing = this.$refs.swing.getNode()
+
+        const group = this.$refs.group.getNode()
+
+        let rect = new Konva.Rect({
+          fill: "yellow",
+          height: 40,
+          width: 40,
+          y: 0,
+          x: this.randomInt(swing.width() / 2, swing.width() - 40),
+          id: 'rect2'
+          // id: group.getChildren().length
+        })
+
+        layer.add(rect)
+        layer.draw()
+
+        return rect
+      },
+
+      randomInt(min, max) {
+        return min + Math.floor((max - min) * Math.random());
       }
 
     },
 
     mounted() {
-
-      let angularSpeed = 90;
-
-      let swing = this.$refs.swing.getNode()
-      // let box = this.$refs.rect.getNode()
+      this.swingGroup = this.$refs.group.getNode()
+      this.swing = this.$refs.swing.getNode()
       let actionBtn = this.$refs.actionBtn.getNode()
 
       this.generateButton(actionBtn)
