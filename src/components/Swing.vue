@@ -18,6 +18,8 @@
 
     data() {
       return {
+        rounds: 3,
+        currentRound: 1,
         swingGroup: null,
         swing: null,
         rectConfig: {
@@ -85,6 +87,7 @@
         }));
       },
 
+      //TODO generate any shape
       generateRect() {
         // add new rect to layer, we remove it after adding it to swing group
         const layer = this.$refs.layer.getNode()
@@ -96,7 +99,7 @@
           width: 40,
           y: 0,
           x: 0,
-          id:  'rect1'
+          id:  'leftSideShape'
           // id: group.getChildren().length
         })
 
@@ -117,7 +120,7 @@
           width: node.width(),
           y: 0 - node.height(),
           x: node.x() - 10,
-          id: 'rect1'
+          id: swingGroup.getChildren().length
         })
 
         layer.find(`#${node.attrs.id}`).destroy()
@@ -125,7 +128,13 @@
         swingGroup.add(rect)
         swingGroup.draw()
 
-        this.rotateSwing()
+        console.log('node id ;     ', node.id())
+
+        node.id() === 'rightSideShape' ? this.countSwingDegree() : null
+
+        // this.rotateSwing()
+
+
 
       },
 
@@ -154,7 +163,7 @@
 
       },
 
-      logKey(e, rect = this.$refs.layer.getNode().find('#rect1')[0]) {
+      logKey(e, rect = this.$refs.layer.getNode().find('#leftSideShape')[0]) {
         //handle drop
 
         const MOVE_SPEED = 5
@@ -195,8 +204,7 @@
           width: 40,
           y: 0,
           x: this.randomInt(swing.width() / 2, swing.width() - 40),
-          id: 'rect2'
-          // id: group.getChildren().length
+          id: 'rightSideShape'
         })
 
         layer.add(rect)
@@ -207,6 +215,34 @@
 
       randomInt(min, max) {
         return min + Math.floor((max - min) * Math.random());
+      },
+
+      countSwingDegree(x1, x2) {
+        let F1, F2, l1, l2
+        const g = 9.81
+        const CENTER_POINT = this.swing.width() / 2
+
+        F1 = 10 * g
+        F2 = 10 * g
+
+        l1 = CENTER_POINT - x1
+        l2 = this.swing.width() - (x2 - CENTER_POINT)
+
+        function isEqual () {
+          return F1 * l1 === F2 * l2
+        }
+
+        if (isEqual) {
+          console.log('EQUAL')
+        }
+
+        else {
+          console.log('NOT Equal')
+        }
+
+        this.currentRound++
+        this.currentRound <= 3 ? this.startGame() : null
+
       }
 
     },
