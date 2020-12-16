@@ -20,6 +20,8 @@
       return {
         rounds: 3,
         currentRound: 1,
+        leftSideShapes: [],
+        rightSideShapes: [],
         swingGroup: null,
         swing: null,
         rectConfig: {
@@ -130,7 +132,27 @@
 
         console.log('node id ;     ', node.id())
 
-        node.id() === 'rightSideShape' ? this.countSwingDegree() : null
+        if (node.id() === 'leftSideShape') {
+          console.log('here')
+          this.leftSideShapes.push({
+            position: rect.x() + rect.width() / 2,
+            weight: 10
+          })
+        }
+
+        if (node.id() === 'rightSideShape') {
+          console.log('here')
+          this.rightSideShapes.push({
+            position: rect.x() + rect.width() / 2,
+            weight: 10
+          })
+
+          // this.$nextTick(() => {
+            this.countSwingDegree()
+          // })
+
+        }
+
 
         // this.rotateSwing()
 
@@ -179,13 +201,13 @@
 
       },
 
-      rotateSwing() {
+      rotateSwing(deg) {
         const swing = this.$refs.group.getNode()
 
         let tween = new Konva.Tween({
           node: swing,
           duration: 1,
-          rotation: -10
+          rotation: deg
         });
 
         tween.play()
@@ -217,32 +239,31 @@
         return min + Math.floor((max - min) * Math.random());
       },
 
-      countSwingDegree(x1, x2) {
-        let F1, F2, l1, l2
+      countSwingDegree() {
+        let F1 = 0, F2 = 0, l1 = 0, l2 = 0
         const g = 9.81
         const CENTER_POINT = this.swing.width() / 2
 
-        F1 = 10 * g
-        F2 = 10 * g
+        this.leftSideShapes.forEach(shape => {
+          F1 += (shape.weight * g)
+          l1 += shape.position
+        })
 
-        l1 = CENTER_POINT - x1
-        l2 = this.swing.width() - (x2 - CENTER_POINT)
+        this.rightSideShapes.forEach(shape => {
+          F2 += (shape.weight * g)
+          l2 += (this.swing.width() - shape.position)
+        })
 
-        function isEqual () {
-          return F1 * l1 === F2 * l2
-        }
-
-        if (isEqual) {
-          console.log('EQUAL')
-        }
-
-        else {
-          console.log('NOT Equal')
-        }
+        this.rotateSwing(this.getSwingDegree((F1 * l1), (F2 * l2)))
 
         this.currentRound++
         this.currentRound <= 3 ? this.startGame() : null
 
+      },
+
+      getSwingDegree(a, b) {
+        const deg = 45 * (((a - b) / b).toFixed(2))
+        return deg
       }
 
     },
@@ -254,34 +275,6 @@
 
       this.generateButton(actionBtn)
 
-
-
-      // var tween2 = new Konva.Tween({
-      //   node: box,
-      //   duration: 5,
-      //   y: 465
-      // });
-      //
-      // tween2.play()
-      //
-      // setTimeout(() => {
-      //   tween.reverse()
-      // }, 2000)
-      //
-      // setTimeout(() => {
-      //   tween.play()
-      // }, 4000)
-
-
-      // let anim = new Konva.Animation(function (frame) {
-      //   let angleDiff = (frame.timeDiff * angularSpeed) / 1000;
-      //
-      //   console.log({frame})
-      //
-      //   swing.rotate(angleDiff);
-      // }, swing.getLayer());
-      //
-      // anim.start();
     }
 
   }
