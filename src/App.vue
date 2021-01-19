@@ -10,14 +10,17 @@
 
   import Swing from './components/Swing'
 
+  const windowWidth = window.innerWidth,
+        windowHeight = window.innerHeight
+
 export default {
   name: 'App',
 
   data() {
     return {
       configKonva: {
-        width: 1000,
-        height: 1000
+        width: windowWidth,
+        height: windowHeight
       }
     }
   },

@@ -1,5 +1,5 @@
 <template>
-    <v-layer ref="layer">
+    <v-layer ref="screenLayer" :config="layerConfig">
 
       <v-group ref="group" :config="groupConfig">
         <v-rect ref="swing" :config="swingConfig" />
@@ -16,6 +16,13 @@
   export default {
     name: 'Swing',
 
+    // TODO 1. сделать главный экран для запуска игры w = 60% h = 80%
+    // 2. функционал перезапуска игры
+    // 3. пауза
+    // 4. создать различные шейпы
+    // 5. разбить на компоненты
+    // 6. добавить условие победы / проиграша
+
     data() {
       return {
         rounds: 3,
@@ -24,28 +31,28 @@
         rightSideShapes: [],
         swingGroup: null,
         swing: null,
-        rectConfig: {
-          fill: "green",
-          height: 40,
-          width: 40,
-          y: 0,
-          x: 0,
+
+        screenLayer: null,
+
+        layerConfig: {
+          width: 600,
+          y: 50
         },
 
         swingConfig: {
           fill: "red",
           height: 10,
-          width: 300,
+          width: 600,
           y: 0,
           x: 0,
         },
 
         triangleConfig: {
-          x: 160,
-          y: 485,
+          x: 310,
+          y: 605,
           sides: 3,
-          height: 30,
-          width: 50,
+          height: 60,
+          width: 100,
           fill: '#00D2FF',
         },
 
@@ -55,12 +62,12 @@
         },
 
         groupConfig: {
-          y: 455,
-          x: 160,
+          y: 555,
+          x: 310,
           rotation: 0,
           height: 455,
           offset: {
-            x: 150,
+            x: 300,
             y: 5,
           },
         }
@@ -92,7 +99,7 @@
       //TODO generate any shape
       generateRect() {
         // add new rect to layer, we remove it after adding it to swing group
-        const layer = this.$refs.layer.getNode()
+        const layer = this.$refs.screenLayer.getNode()
         const group = this.$refs.group.getNode()
 
         let rect = new Konva.Rect({
@@ -100,9 +107,10 @@
           height: 40,
           width: 40,
           y: 0,
-          x: 0,
-          id:  'leftSideShape'
-          // id: group.getChildren().length
+          x: this.swing.width() / 4,
+          id:  'leftSideShape',
+          stroke: 'black',
+          strokeWidth: 1
         })
 
         layer.add(rect)
@@ -114,7 +122,7 @@
       addNodeToSwingGroup(node) {
         //action when collision happens
         const swingGroup = this.$refs.group.getNode()
-        const layer = this.$refs.layer.getNode()
+        const layer = this.$refs.screenLayer.getNode()
 
         let rect = new Konva.Rect({
           fill: node.fill(),
@@ -122,7 +130,9 @@
           width: node.width(),
           y: 0 - node.height(),
           x: node.x() - 10,
-          id: swingGroup.getChildren().length
+          id: swingGroup.getChildren().length,
+          stroke: 'black',
+          strokeWidth: 1
         })
 
         layer.find(`#${node.attrs.id}`).destroy()
@@ -130,10 +140,7 @@
         swingGroup.add(rect)
         swingGroup.draw()
 
-        console.log('node id ;     ', node.id())
-
         if (node.id() === 'leftSideShape') {
-          console.log('here')
           this.leftSideShapes.push({
             position: rect.x() + rect.width() / 2,
             weight: 10
@@ -141,22 +148,14 @@
         }
 
         if (node.id() === 'rightSideShape') {
-          console.log('here')
           this.rightSideShapes.push({
             position: rect.x() + rect.width() / 2,
             weight: 10
           })
 
-          // this.$nextTick(() => {
-            this.countSwingDegree()
-          // })
+          this.countSwingDegree()
 
         }
-
-
-        // this.rotateSwing()
-
-
 
       },
 
@@ -173,7 +172,7 @@
           DROP_SPEED *= 1.1
           box.y(box.y() + DROP_SPEED)
           opositBox.y(opositBox.y() + DROP_SPEED)
-          this.$refs.layer.getNode().draw()
+          this.$refs.screenLayer.getNode().draw()
 
 
           if (box.y() + box.height() >= swing.y() - 5) {
@@ -185,10 +184,10 @@
 
       },
 
-      logKey(e, rect = this.$refs.layer.getNode().find('#leftSideShape')[0]) {
+      logKey(e, rect = this.$refs.screenLayer.getNode().find('#leftSideShape')[0]) {
         //handle drop
 
-        const MOVE_SPEED = 5
+        const MOVE_SPEED = 10
 
         //arrow right down
         if (e.keyCode === 39 && rect.x() <= this.swing.width()/2 - rect.width()) {
@@ -215,7 +214,7 @@
       },
 
       dropOpositeRect() {
-        const layer = this.$refs.layer.getNode()
+        const layer = this.$refs.screenLayer.getNode()
         const swing = this.$refs.swing.getNode()
 
         const group = this.$refs.group.getNode()
@@ -226,7 +225,9 @@
           width: 40,
           y: 0,
           x: this.randomInt(swing.width() / 2, swing.width() - 40),
-          id: 'rightSideShape'
+          id: 'rightSideShape',
+          stroke: 'black',
+          strokeWidth: 1
         })
 
         layer.add(rect)
@@ -257,12 +258,12 @@
         this.rotateSwing(this.getSwingDegree((F1 * l1), (F2 * l2)))
 
         this.currentRound++
-        this.currentRound <= 3 ? this.startGame() : null
+        this.currentRound <= this.rounds ? this.startGame() : null
 
       },
 
       getSwingDegree(a, b) {
-        const deg = 45 * (((a - b) / b).toFixed(2))
+        const deg = 100 * (((a - b) / b).toFixed(2))
         return deg
       }
 
@@ -273,6 +274,15 @@
       this.swing = this.$refs.swing.getNode()
       let actionBtn = this.$refs.actionBtn.getNode()
 
+      this.screenLayer = this.$refs.screenLayer.getNode()
+      this.screenLayer.x(300)
+      // this.screenLayer.height(this.screenLayer.parent.height())
+
+      const HEIGHT = this.screenLayer.parent.height()
+
+      // console.log({ HEIGHT })
+      // this.screenLayer.height(HEIGHT)
+      // this.screenLayer.draw()
       this.generateButton(actionBtn)
 
     }
